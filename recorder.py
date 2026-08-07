@@ -24,6 +24,7 @@ from kuksa_client.grpc.aio import VSSClient
 from kuksa_client.grpc import VSSClientError
 from kuksa_client.grpc import View
 from kuksa_client.grpc import SubscribeEntry
+from kuksa_client.grpc import MetadataField
 
 from kuksa_client.grpc import Field
 
@@ -44,6 +45,8 @@ def init_argparse() -> argparse.ArgumentParser:
                         " The default value is signals.csv.")
     parser.add_argument("-s", "--signals", help="A list of signals to"
                         " record", nargs='+', required=True)
+    parser.add_argument("-d", "--with-datatype", action="store_true",
+                        help="If set, the VSS datatype for each signal is also recorded.")
     parser.add_argument("-l", "--log", default="INFO", help="This sets the logging level."
                         " The default value is WARNING.",
                         choices={"INFO", "DEBUG", "WARNING", "ERROR", "CRITICAL"})
@@ -58,9 +61,13 @@ async def main():
         logging.basicConfig(encoding='utf-8', level=numeric_value)
     try:
         async with VSSClient(args.address, args.port) as client:
-            csvfile = open(args.file, 'w', newline='', encoding="utf-8")
-            signalwriter = csv.DictWriter(csvfile, ['field', 'signal', 'value', 'delay'])
+            fieldnames = ['field', 'signal', 'value', 'delay']
+            if args.with_datatype:
+                fieldnames.append('datatype')
+            csvfile = open(args.file, 'w', newline='', encoding="utf-8", buffering=1)
+            signalwriter = csv.DictWriter(csvfile, fieldnames)
             signalwriter.writeheader()
+            signal_datatypes = {}
             previous_time = time.time()
             initial_value = True
             entries = []
@@ -78,16 +85,33 @@ async def main():
                     previous_time = current_time
                 for update in updates:
                     entry = update.entry
+                    if args.with_datatype and entry.path not in signal_datatypes:
+                        try:
+                            metadata_response = await client.get_metadata(
+                                [entry.path], MetadataField.DATA_TYPE)
+                            signal_datatypes[entry.path] = (
+                                metadata_response[entry.path].data_type.name)
+                        except (VSSClientError, KeyError):
+                            logging.warning(
+                                "Could not resolve datatype for %s, defaulting to UNSPECIFIED",
+                                entry.path)
+                            signal_datatypes[entry.path] = "UNSPECIFIED"
                     if entry.value is not None:
-                        signalwriter.writerow({'field': 'current',
-                                               'signal': entry.path,
-                                               'value': entry.value.value,
-                                               'delay': time_gap})
+                        row = {'field': 'current',
+                               'signal': entry.path,
+                               'value': entry.value.value,
+                               'delay': time_gap}
+                        if args.with_datatype:
+                            row['datatype'] = signal_datatypes.get(entry.path, "UNSPECIFIED")
+                        signalwriter.writerow(row)
                     if entry.actuator_target is not None:
-                        signalwriter.writerow({'field': 'target',
-                                               'signal': entry.path,
-                                               'value': entry.actuator_target.value,
-                                               'delay': time_gap})
+                        row = {'field': 'target',
+                               'signal': entry.path,
+                               'value': entry.actuator_target.value,
+                               'delay': time_gap}
+                        if args.with_datatype:
+                            row['datatype'] = signal_datatypes.get(entry.path, "UNSPECIFIED")
+                        signalwriter.writerow(row)
     except VSSClientError as error:
         logging.error("There was a problem in the interaction"
                       " with the KUKSA.val databroker at %s:%s: %s ",
