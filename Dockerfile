@@ -13,7 +13,7 @@
 
 
 # Build stage, to create a Virtual Environent
-FROM --platform=$TARGETPLATFORM python:3.10-slim-bookworm as builder
+FROM --platform=$TARGETPLATFORM python:3.13-slim-trixie AS builder
 
 ARG TARGETPLATFORM
 ARG BUILDPLATFORM
@@ -41,11 +41,11 @@ WORKDIR /data
 COPY ./signals.csv ./signals.csv
 
 # Runner stage, to copy in the virtual environment and the app
-# Debian 12 is bookworm, so the glibc version matches. Distroless is a lot smaller than
+# Debian 13 is trixie, so the glibc version matches. Distroless is a lot smaller than
 # Debian slim versions
 # For development add :debug like this
-# FROM gcr.io/distroless/base-debian12:debug  to get a busybox shell as well
-FROM gcr.io/distroless/base-debian12
+# FROM gcr.io/distroless/base-debian13:debug  to get a busybox shell as well
+FROM gcr.io/distroless/base-debian13
 
 WORKDIR /dist
 

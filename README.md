@@ -50,6 +50,41 @@ Each line in the csv file consists of the following elements:
 | signal | the name of the signal to update | Vehicle.Speed |
 | value | the new value | 48 |
 | delay | Indicates the time in seconds which the provider shall wait after processing this signal. This way one can emulate the change of signals over time. | 0 |
+| datatype (optional) | The VSS data type of the signal. Present only when the recorder is used with `--with-datatype`. | FLOAT |
+
+### Datatype Column
+
+When the recorder is used with the `--with-datatype` flag, a `datatype` column is appended to the CSV. It contains the VSS data type name for each signal, resolved from the KUKSA Databroker's metadata. The following values may appear:
+
+| Datatype | Description |
+| -- | -- |
+| UNSPECIFIED | Fallback when the type could not be resolved from the Databroker |
+| STRING | A string value |
+| BOOLEAN | A boolean value (`true` / `false`) |
+| INT8 | Signed 8-bit integer |
+| INT16 | Signed 16-bit integer |
+| INT32 | Signed 32-bit integer |
+| INT64 | Signed 64-bit integer |
+| UINT8 | Unsigned 8-bit integer |
+| UINT16 | Unsigned 16-bit integer |
+| UINT32 | Unsigned 32-bit integer |
+| UINT64 | Unsigned 64-bit integer |
+| FLOAT | 32-bit floating point |
+| DOUBLE | 64-bit floating point |
+| TIMESTAMP | A timestamp value |
+| STRING_ARRAY | Array of string values |
+| BOOLEAN_ARRAY | Array of boolean values |
+| INT8_ARRAY | Array of signed 8-bit integers |
+| INT16_ARRAY | Array of signed 16-bit integers |
+| INT32_ARRAY | Array of signed 32-bit integers |
+| INT64_ARRAY | Array of signed 64-bit integers |
+| UINT8_ARRAY | Array of unsigned 8-bit integers |
+| UINT16_ARRAY | Array of unsigned 16-bit integers |
+| UINT32_ARRAY | Array of unsigned 32-bit integers |
+| UINT64_ARRAY | Array of unsigned 64-bit integers |
+| FLOAT_ARRAY | Array of 32-bit floating point values |
+| DOUBLE_ARRAY | Array of 64-bit floating point values |
+| TIMESTAMP_ARRAY | Array of timestamp values |
 
 ## TLS
 
@@ -87,6 +122,7 @@ The recorder supports the following parameters:
 |-s| --signals | A list of signals to record. | There is no default value, but the argument is required.|
 | -a | --address | This indicates the address of KUKSA Databroker to connect to. | 127.0.0.1 |
 | -p | --port | This indicates the port of the KUKSA Databroker to connect to. | 55555 |
+| -d | --with-datatype | If set, the VSS datatype for each signal is also recorded in a `datatype` column. | not present/False |
 | -l | --log | This sets the logging level. Possible values are: DEBUG, INFO, WARNING, ERROR, CRITICAL | INFO |
 
 ## Container
