@@ -18,7 +18,10 @@ import argparse
 import asyncio
 import csv
 import logging
+import os
 import time
+from pathlib import Path
+from urllib.parse import urlparse
 
 from kuksa_client.grpc.aio import VSSClient
 from kuksa_client.grpc import VSSClientError
@@ -32,14 +35,13 @@ from kuksa_client.grpc import Field
 def init_argparse() -> argparse.ArgumentParser:
     '''This inits the argument parser for the CSV-recorder.'''
     parser = argparse.ArgumentParser(
-        usage="-a [BROKER ADDRESS] -p [BROKER PORT] -f [FILE] -s [SIGNALS] -l [LOGGING LEVEL]",
+        usage="[URI] -s [SIGNALS] -f [FILE] -l [LOGGING LEVEL]",
         description="This provider writes the content of a csv file to a KUKSA.val databroker")
-    parser.add_argument("-a", "--address", default="127.0.0.1", help="This indicates the address"
-                        " of the KUKSA.val databroker to connect to."
-                        " The default value is 127.0.0.1")
-    parser.add_argument("-p", "--port", default="55555", help="This indicates the port"
-                        " of the KUKSA.val databroker to connect to."
-                        " The default value is 55555", type=int)
+    parser.add_argument("server", nargs="?",
+                        default=os.environ.get("KUKSA_ADDRESS", "grpc://127.0.0.1:55555"),
+                        help="URI of the KUKSA.val databroker to connect to, e.g. grpc://127.0.0.1:55555"
+                        " or grpcs://localhost:55555 for a TLS connection."
+                        " The default value is grpc://127.0.0.1:55555")
     parser.add_argument("-f", "--file", default="signalsOut.csv", help="This indicates the csv file"
                         " to write the signals to."
                         " The default value is signals.csv.")
@@ -50,17 +52,51 @@ def init_argparse() -> argparse.ArgumentParser:
     parser.add_argument("-l", "--log", default="INFO", help="This sets the logging level."
                         " The default value is WARNING.",
                         choices={"INFO", "DEBUG", "WARNING", "ERROR", "CRITICAL"})
+    parser.add_argument("--cacertificate",
+                        help="Specify the path to your CA.pem. Needed when connecting using a"
+                        " grpcs:// URI",
+                        nargs='?', default=None)
+    parser.add_argument("--tls-server-name",
+                        help="TLS server name, may be needed if addressing a server by IP-name",
+                        nargs='?', default=None)
     return parser
+
+
+def get_connection_details(parser: argparse.ArgumentParser, args: argparse.Namespace) -> tuple:
+    '''Resolve host, port, root certificate and TLS server name from the server URI.'''
+    parts = urlparse(args.server)
+    if parts.scheme.lower() not in ("grpc", "grpcs"):
+        parser.error("Unsupported URI scheme %s. Use grpc:// or grpcs://"
+                     % (parts.scheme or "(none)"))
+    if parts.hostname is None:
+        parser.error("No hostname or IP given in server URI")
+    try:
+        port = parts.port or 55555
+    except ValueError:
+        parser.error("Invalid port in server URI %s" % parts.netloc)
+    root_certificates = Path(args.cacertificate) if args.cacertificate else None
+    if parts.scheme.lower() == "grpcs" and root_certificates is None:
+        parser.error("TLS cannot be used as no CA Certificate specified."
+                     " Provide the --cacertificate argument")
+    return parts.hostname, port, root_certificates, args.tls_server_name
 
 
 async def main():
     '''entrypoint to the CSV-recorder'''
-    args = init_argparse().parse_args()
+    parser = init_argparse()
+    args = parser.parse_args()
+    for signal in args.signals:
+        if "://" in signal:
+            parser.error("%s looks like a server URI, not a signal path. Give the server URI"
+                         " before the -s argument, e.g. python3 recorder.py %s -s ..."
+                         % (signal, signal))
     numeric_value = getattr(logging, args.log.upper(), None)
     if isinstance(numeric_value, int):
         logging.basicConfig(encoding='utf-8', level=numeric_value)
+    host, port, root_path, tls_server_name = get_connection_details(parser, args)
     try:
-        async with VSSClient(args.address, args.port) as client:
+        async with VSSClient(host, port, root_certificates=root_path,
+                             tls_server_name=tls_server_name) as client:
             fieldnames = ['field', 'signal', 'value', 'delay']
             if args.with_datatype:
                 fieldnames.append('datatype')
@@ -114,7 +150,7 @@ async def main():
                         signalwriter.writerow(row)
     except VSSClientError as error:
         logging.error("There was a problem in the interaction"
-                      " with the KUKSA.val databroker at %s:%s: %s ",
-                      args.address, args.port, str(error))
+                      " with the KUKSA.val databroker at %s: %s ",
+                      args.server, str(error))
 
 asyncio.run(main())
