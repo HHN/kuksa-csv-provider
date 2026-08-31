@@ -111,7 +111,7 @@ by the `--tls-server-name` argument. The example server certificate lists the na
 so one of those names needs to be specified if connecting to `127.0.0.1`. An example is shown below:
 
 ```console
-python provider.py grpcs://localhost:55555 --cacertificate /home/user/kuksa.val/kuksa_certificates/CA.pem --tls-server-name Server
+python provider.py grpcs://localhost:55555 --cacertificate <path-to-certificates>/CA.pem --tls-server-name Server
 ```
 
 ## Limitations
