@@ -107,10 +107,10 @@ async def main():
                     await process_rows(client, rows)
             else:
                 await process_rows(client, signal_reader)
-    except VSSClientError:
-        logging.error("Could not connect to the kuksa.val databroker at %s."
-                      " Make sure to set the correct connection details using the server URI"
-                      " and that the kuksa.val databroker is running.", args.server)
+    except VSSClientError as error:
+        logging.error("Could not connect to the KUKSA databroker at %s:"
+                      "\n %s"
+                      "\nMake sure the KUKSA databroker is running and reachable.", args.server, error)
 
 
 async def process_rows(client, rows):
