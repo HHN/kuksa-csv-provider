@@ -35,7 +35,6 @@ from kuksa_client.grpc import Field
 def init_argparse() -> argparse.ArgumentParser:
     '''This inits the argument parser for the CSV-recorder.'''
     parser = argparse.ArgumentParser(
-        usage="[URI] -s [SIGNALS] -f [FILE] -l [LOGGING LEVEL]",
         description="This provider writes the content of a csv file to a KUKSA.val databroker")
     parser.add_argument("server", nargs="?",
                         default=os.environ.get("KUKSA_ADDRESS", "grpc://127.0.0.1:55555"),

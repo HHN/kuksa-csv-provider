@@ -34,7 +34,6 @@ from kuksa_client.grpc.aio import VSSClient
 def init_argparse() -> argparse.ArgumentParser:
     '''This inits the argument parser for the CSV-provider.'''
     parser = argparse.ArgumentParser(
-        usage="[URI] -f [FILE]",
         description="This provider writes the content of a csv file to a kuksa.val databroker",
     )
     environment = os.environ
