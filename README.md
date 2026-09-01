@@ -23,7 +23,7 @@ The provider uses the [KUKSA Python SDK](https://github.com/eclipse-kuksa/kuksa-
 You can start the provider (`provider.py`) with the following arguments on a command line:
 
 ```
-usage: provider.py [-h] [-f FILE] [-i | --infinite | --no-infinite] [-l {INFO,ERROR,CRITICAL,DEBUG,WARNING}] [--cacertificate [CACERTIFICATE]]
+usage: provider.py [-h] [-a ADDRESS] [-p PORT] [-f FILE] [-i | --infinite | --no-infinite] [-l {INFO,ERROR,CRITICAL,DEBUG,WARNING}] [--cacertificate [CACERTIFICATE]]
                    [--tls-server-name [TLS_SERVER_NAME]]
                    [server]
 
@@ -35,6 +35,8 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
+  -a, --address ADDRESS [DEPRECATED] Address of the kuksa.val databroker to connect to. Use the positional server URI instead, e.g. grpc://127.0.0.1:55555
+  -p, --port PORT       [DEPRECATED] Port of the kuksa.val databroker to connect to. Use the positional server URI instead, e.g. grpc://127.0.0.1:55555
   -f, --file FILE       This indicates the csv file containing the signals to update in the kuksa.val databroker. The default value is signals.csv.
   -i, --infinite, --no-infinite
                         If the flag is set, the provider loopsthe file until stopped, otherwise the file gets processed once.
@@ -45,6 +47,8 @@ options:
   --tls-server-name [TLS_SERVER_NAME]
                         TLS server name, may be needed if addressing a server by IP-name
 ```
+
+`-a`/`--address` and `-p`/`--port` are deprecated and kept for backwards compatibility. They cannot be used together with the positional `server` URI. When used, a warning is printed and the address and port are combined into a `grpc://` URI.
 
 ## CSV File
 
@@ -131,7 +135,7 @@ python3 recorder.py -s Vehicle.Speed Vehicle.Width
 The recorder supports the following parameters:
 
 ```
-usage: recorder.py [-h] [-f FILE] -s SIGNALS [SIGNALS ...] [-d] [-l {DEBUG,WARNING,INFO,ERROR,CRITICAL}] [--cacertificate [CACERTIFICATE]]
+usage: recorder.py [-h] [-a ADDRESS] [-p PORT] [-f FILE] -s SIGNALS [SIGNALS ...] [-d] [-l {DEBUG,WARNING,INFO,ERROR,CRITICAL}] [--cacertificate [CACERTIFICATE]]
                    [--tls-server-name [TLS_SERVER_NAME]]
                    [server]
 
@@ -143,6 +147,8 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
+  -a, --address ADDRESS [DEPRECATED] Address of the KUKSA.val databroker to connect to. Use the positional server URI instead, e.g. grpc://127.0.0.1:55555
+  -p, --port PORT       [DEPRECATED] Port of the KUKSA.val databroker to connect to. Use the positional server URI instead, e.g. grpc://127.0.0.1:55555
   -f, --file FILE       This indicates the csv file to write the signals to. The default value is signals.csv.
   -s, --signals SIGNALS [SIGNALS ...]
                         A list of signals to record
@@ -155,6 +161,8 @@ options:
                         TLS server name, may be needed if addressing a server by IP-name
 ```
 
+`-a`/`--address` and `-p`/`--port` are deprecated and kept for backwards compatibility. They cannot be used together with the positional `server` URI. When used, a warning is printed and the address and port are combined into a `grpc://` URI.
+```
 ## Container
 
 CSV-provider is also available as container
