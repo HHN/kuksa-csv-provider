@@ -20,17 +20,35 @@ The provider uses the [KUKSA Python SDK](https://github.com/eclipse-kuksa/kuksa-
 
 ## Arguments
 
-You can start the provider with the following arguments on a command line:
+You can start the provider (`provider.py`) with the following arguments on a command line:
 
-| short argument | long argument | environment variable | description | default value |
-|---- | ---- | ---- |----- | ----|
-|-f| --file | PROVIDER_SIGNALS_FILE | This indicates the CSV-file containing the signals to update in the KUKSA Databroker. | signals.csv |
-| -a | --address | KUKSA_DATA_BROKER_ADDR | This indicates the address of KUKSA Databroker to connect to. | 127.0.0.1 |
-| -p | --port | KUKSA_DATA_BROKER_PORT | This indicates the port of the KUKSA Databroker to connect to. | 55555 |
-| -i | --infinite | PROVIDER_INFINITE | If the flag is set, the provider loops over the file until stopped, otherwise the file gets processed once. | not present/False |
-| -l | --log | PROVIDER_LOG_LEVEL | This sets the logging level. Possible values are: DEBUG, INFO, DEBUG, WARNING, ERROR, CRITICAL | WARNING |
-|    | --cacertificate | - | Path to root CA. If defined the client will attempt to use a secure connection and identify the server using this certificate. | None |
-|    | --tls-server-name | - | TLS server name, may be needed if addressing a server by IP-name. | None |
+```
+usage: provider.py [-h] [-a ADDRESS] [-p PORT] [-f FILE] [-i | --infinite | --no-infinite] [-l {INFO,ERROR,CRITICAL,DEBUG,WARNING}] [--cacertificate [CACERTIFICATE]]
+                   [--tls-server-name [TLS_SERVER_NAME]]
+                   [server]
+
+This provider writes the content of a csv file to a kuksa.val databroker
+
+positional arguments:
+  server                URI of the kuksa.val databroker to connect to, e.g. grpc://127.0.0.1:55555 or grpcs://localhost:55555 for a TLS connection.
+                        The default value is grpc://127.0.0.1:55555
+
+options:
+  -h, --help            show this help message and exit
+  -a, --address ADDRESS [DEPRECATED] Address of the kuksa.val databroker to connect to. Use the positional server URI instead, e.g. grpc://127.0.0.1:55555
+  -p, --port PORT       [DEPRECATED] Port of the kuksa.val databroker to connect to. Use the positional server URI instead, e.g. grpc://127.0.0.1:55555
+  -f, --file FILE       This indicates the csv file containing the signals to update in the kuksa.val databroker. The default value is signals.csv.
+  -i, --infinite, --no-infinite
+                        If the flag is set, the provider loopsthe file until stopped, otherwise the file gets processed once.
+  -l, --log {CRITICAL,ERROR,INFO,DEBUG,WARNING}
+                        This sets the logging level. The default value is WARNING.
+  --cacertificate [CACERTIFICATE]
+                        Specify the path to your CA.pem. Needed when connecting using a grpcs:// URI
+  --tls-server-name [TLS_SERVER_NAME]
+                        TLS server name, may be needed if addressing a server by IP-name
+```
+
+`-a`/`--address` and `-p`/`--port` are deprecated and kept for backwards compatibility. They cannot be used together with the positional `server` URI. When used, a warning is printed and the address and port are combined into a `grpc://` URI.
 
 ## CSV File
 
@@ -88,16 +106,16 @@ When the recorder is used with the `--with-datatype` flag, a `datatype` column i
 
 ## TLS
 
-If connecting to a KUKSA Databroker that require a secure connection you must specify which root certificate to
-use to identify the Server by the `--cacertificate` argument. If your (test) setup use the KUKSA example
-certificates you must give [CA.pem](https://github.com/eclipse/kuksa.val/blob/master/kuksa_certificates/CA.pem)
+If connecting to a KUKSA Databroker that require a secure connection use a `grpcs://` server URI and specify
+which root certificate to use to identify the Server by the `--cacertificate` argument. If your (test) setup
+uses the KUKSA example certificates you must give [CA.pem](https://github.com/eclipse-kuksa/kuksa.val/blob/master/kuksa_certificates/CA.pem)
 as root CA. The server name must match the name in the certificate provided by KUKSA.val databroker.
 Due to a limitation in the gRPC client, if connecting by IP-address you may need to give a name listed in the certificate
 by the `--tls-server-name` argument. The example server certificate lists the names `Server` and `localhost`,
 so one of those names needs to be specified if connecting to `127.0.0.1`. An example is shown below:
 
 ```console
-python provider.py --cacertificate /home/user/kuksa.val/kuksa_certificates/CA.pem --tls-server-name Server
+python provider.py grpcs://localhost:55555 --cacertificate <path-to-certificates>/CA.pem --tls-server-name Server
 ```
 
 ## Limitations
@@ -116,15 +134,35 @@ python3 recorder.py -s Vehicle.Speed Vehicle.Width
 
 The recorder supports the following parameters:
 
-| short argument | long argument | description | default value |
-|---- | ---- | ----- | ----|
-|-f| --file | This indicates the filename to which to write the VSS-signals. | signalsOut.csv |
-|-s| --signals | A list of signals to record. | There is no default value, but the argument is required.|
-| -a | --address | This indicates the address of KUKSA Databroker to connect to. | 127.0.0.1 |
-| -p | --port | This indicates the port of the KUKSA Databroker to connect to. | 55555 |
-| -d | --with-datatype | If set, the VSS datatype for each signal is also recorded in a `datatype` column. | not present/False |
-| -l | --log | This sets the logging level. Possible values are: DEBUG, INFO, WARNING, ERROR, CRITICAL | INFO |
+```
+usage: recorder.py [-h] [-a ADDRESS] [-p PORT] [-f FILE] -s SIGNALS [SIGNALS ...] [-d] [-l {DEBUG,WARNING,INFO,ERROR,CRITICAL}] [--cacertificate [CACERTIFICATE]]
+                   [--tls-server-name [TLS_SERVER_NAME]]
+                   [server]
 
+This provider writes the content of a csv file to a KUKSA.val databroker
+
+positional arguments:
+  server                URI of the KUKSA.val databroker to connect to, e.g. grpc://127.0.0.1:55555 or grpcs://localhost:55555 for a TLS connection.
+                        The default value is grpc://127.0.0.1:55555
+
+options:
+  -h, --help            show this help message and exit
+  -a, --address ADDRESS [DEPRECATED] Address of the KUKSA.val databroker to connect to. Use the positional server URI instead, e.g. grpc://127.0.0.1:55555
+  -p, --port PORT       [DEPRECATED] Port of the KUKSA.val databroker to connect to. Use the positional server URI instead, e.g. grpc://127.0.0.1:55555
+  -f, --file FILE       This indicates the csv file to write the signals to. The default value is signals.csv.
+  -s, --signals SIGNALS [SIGNALS ...]
+                        A list of signals to record
+  -d, --with-datatype   If set, the VSS datatype for each signal is also recorded.
+  -l, --log {DEBUG,WARNING,INFO,ERROR,CRITICAL}
+                        This sets the logging level. The default value is WARNING.
+  --cacertificate [CACERTIFICATE]
+                        Specify the path to your CA.pem. Needed when connecting using a grpcs:// URI
+  --tls-server-name [TLS_SERVER_NAME]
+                        TLS server name, may be needed if addressing a server by IP-name
+```
+
+`-a`/`--address` and `-p`/`--port` are deprecated and kept for backwards compatibility. They cannot be used together with the positional `server` URI. When used, a warning is printed and the address and port are combined into a `grpc://` URI.
+```
 ## Container
 
 CSV-provider is also available as container
